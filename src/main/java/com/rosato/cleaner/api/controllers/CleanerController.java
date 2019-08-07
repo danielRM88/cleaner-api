@@ -1,11 +1,12 @@
 package com.rosato.cleaner.api.controllers;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.validation.Valid;
+
+import com.rosato.cleaner.api.models.Cleaner;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,8 +16,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/v1/structures")
-public class StructureController {
+@RequestMapping("/v1/cleaners")
+public class CleanerController {
 
   public static class OptimizationRequest {
     List<Integer> rooms;
@@ -54,40 +55,12 @@ public class StructureController {
     List<Integer> rooms = req.rooms;
     Integer seniorCapacity = req.senior;
     Integer juniorCapacity = req.junior;
+    Cleaner cleaner = new Cleaner(seniorCapacity, juniorCapacity);
 
     List<Map<String, Integer>> response = new ArrayList<>();
 
     for (Integer room : rooms) {
-      Integer minDifference = Integer.MAX_VALUE;
-      Integer seniors = 1;
-      Integer juniors = 0;
-      Map<String, Integer> mapping = new HashMap<>();
-
-      Integer selectedJuniors = juniors;
-      Integer selectedSeniors = seniors;
-      do {
-        juniors = (int) Math.ceil((room - (seniorCapacity * seniors)) / juniorCapacity.doubleValue());
-
-        if (juniors < 0) {
-          juniors = 0;
-        }
-
-        Integer difference = ((seniorCapacity * seniors) + (juniorCapacity * juniors) - room);
-        if (difference < minDifference) {
-          minDifference = difference;
-          selectedJuniors = juniors;
-          selectedSeniors = seniors;
-
-          if (difference == 0) {
-            break;
-          }
-        }
-
-        seniors++;
-      } while (juniors > 0);
-
-      mapping.put("senior", selectedSeniors);
-      mapping.put("junior", selectedJuniors);
+      Map<String, Integer> mapping = cleaner.optimize(room);
 
       response.add(mapping);
     }

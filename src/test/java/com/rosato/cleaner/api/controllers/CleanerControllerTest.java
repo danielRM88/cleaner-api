@@ -11,7 +11,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rosato.cleaner.api.controllers.StructureController.OptimizationRequest;
+import com.rosato.cleaner.api.controllers.CleanerController.OptimizationRequest;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,6 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -30,13 +29,10 @@ import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(Lifecycle.PER_CLASS)
-public class StructureControllerTest {
+public class CleanerControllerTest {
   // bind the above RANDOM_PORT
   @LocalServerPort
   private int port;
-
-  @Autowired
-  private TestRestTemplate restTemplate;
 
   @Autowired
   private WebApplicationContext context;
@@ -49,7 +45,7 @@ public class StructureControllerTest {
   }
 
   @Test
-  public void testOptimize() throws Exception {
+  public void testOptimizeFirstCase() throws Exception {
     OptimizationRequest req = new OptimizationRequest();
     req.setRooms(Arrays.asList(35, 21, 17, 28));
     req.setSenior(10);
@@ -57,7 +53,7 @@ public class StructureControllerTest {
 
     String expectedResponse = "[{\"senior\":3,\"junior\":1},{\"senior\":1,\"junior\":2},{\"senior\":2,\"junior\":0},{\"senior\":1,\"junior\":3}]";
 
-    String url = new URL("http://localhost:" + port + "/v1/structures/optimize").toString();
+    String url = new URL("http://localhost:" + port + "/v1/cleaners/optimize").toString();
 
     ObjectMapper objectMapper = new ObjectMapper();
     MockHttpServletResponse mockHttpServletResponse = mvc
@@ -71,6 +67,32 @@ public class StructureControllerTest {
         });
 
     assertEquals(4, result.size());
+    assertEquals(expectedResponse, response);
+  }
+
+  @Test
+  public void testOptimizeSecondCase() throws Exception {
+    OptimizationRequest req = new OptimizationRequest();
+    req.setRooms(Arrays.asList(24, 28));
+    req.setSenior(11);
+    req.setJunior(6);
+
+    String expectedResponse = "[{\"senior\":2,\"junior\":1},{\"senior\":2,\"junior\":1}]";
+
+    String url = new URL("http://localhost:" + port + "/v1/cleaners/optimize").toString();
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    MockHttpServletResponse mockHttpServletResponse = mvc
+        .perform(post(url).contentType(MediaType.APPLICATION_JSON_VALUE).content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isOk()).andReturn().getResponse();
+    String response = mockHttpServletResponse.getContentAsString();
+
+    System.out.println(response);
+    List<Map<String, Integer>> result = objectMapper.readValue(response,
+        new TypeReference<List<Map<String, Integer>>>() {
+        });
+
+    assertEquals(2, result.size());
     assertEquals(expectedResponse, response);
   }
 }
