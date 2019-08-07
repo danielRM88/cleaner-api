@@ -1,6 +1,7 @@
 package com.rosato.cleaner.api.controllers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,10 +52,45 @@ public class StructureController {
   @ResponseStatus(HttpStatus.OK)
   public List<Map<String, Integer>> optimize(@Valid @RequestBody OptimizationRequest req) {
     List<Integer> rooms = req.rooms;
-    Integer senior = req.senior;
-    Integer junios = req.junior;
+    Integer seniorCapacity = req.senior;
+    Integer juniorCapacity = req.junior;
 
     List<Map<String, Integer>> response = new ArrayList<>();
+
+    for (Integer room : rooms) {
+      Integer minDifference = Integer.MAX_VALUE;
+      Integer seniors = 1;
+      Integer juniors = 0;
+      Map<String, Integer> mapping = new HashMap<>();
+
+      Integer selectedJuniors = juniors;
+      Integer selectedSeniors = seniors;
+      do {
+        juniors = (int) Math.ceil((room - (seniorCapacity * seniors)) / juniorCapacity.doubleValue());
+
+        if (juniors < 0) {
+          juniors = 0;
+        }
+
+        Integer difference = ((seniorCapacity * seniors) + (juniorCapacity * juniors) - room);
+        if (difference < minDifference) {
+          minDifference = difference;
+          selectedJuniors = juniors;
+          selectedSeniors = seniors;
+
+          if (difference == 0) {
+            break;
+          }
+        }
+
+        seniors++;
+      } while (juniors > 0);
+
+      mapping.put("senior", selectedSeniors);
+      mapping.put("junior", selectedJuniors);
+
+      response.add(mapping);
+    }
 
     return response;
   }

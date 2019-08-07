@@ -22,7 +22,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
@@ -52,11 +51,12 @@ public class StructureControllerTest {
   @Test
   public void testOptimize() throws Exception {
     OptimizationRequest req = new OptimizationRequest();
-    req.setRooms(Arrays.asList(1, 2, 3));
+    req.setRooms(Arrays.asList(35, 21, 17, 28));
     req.setSenior(10);
     req.setJunior(6);
 
-    HttpEntity<OptimizationRequest> entity = new HttpEntity<>(req);
+    String expectedResponse = "[{\"senior\":3,\"junior\":1},{\"senior\":1,\"junior\":2},{\"senior\":2,\"junior\":0},{\"senior\":1,\"junior\":3}]";
+
     String url = new URL("http://localhost:" + port + "/v1/structures/optimize").toString();
 
     ObjectMapper objectMapper = new ObjectMapper();
@@ -65,11 +65,12 @@ public class StructureControllerTest {
         .andExpect(status().isOk()).andReturn().getResponse();
     String response = mockHttpServletResponse.getContentAsString();
 
+    System.out.println(response);
     List<Map<String, Integer>> result = objectMapper.readValue(response,
         new TypeReference<List<Map<String, Integer>>>() {
         });
 
-    assertEquals(3, result.size());
-    assertEquals(Integer.valueOf(2), result.get(0).get("senior"));
+    assertEquals(4, result.size());
+    assertEquals(expectedResponse, response);
   }
 }
